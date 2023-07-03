@@ -1,11 +1,12 @@
 use std::{
     collections::VecDeque,
     fs::File,
-    io::{BufRead, BufReader, BufWriter, Write},
+    io::{BufRead, BufReader, BufWriter, Write}, sync::{Arc, Mutex},
 };
 
 use fnv::FnvHashSet;
 use smallvec::SmallVec;
+use rayon::prelude::*;
 
 use super::{DirectionToCheck, FieldPos};
 use super::{EfficientPlayField, RelativePosition};
@@ -20,6 +21,8 @@ pub mod tests;
 pub mod unit_tests;
 
 const TO_TAKE_VEC_SIZE: usize = 64;
+
+type FnvHashSetMutex = Arc<Mutex<FnvHashSet<EfficientPlayField>>>;
 
 impl EfficientPlayField {
     /// Counts & returns the amount of stones on the whole plazfield
@@ -93,23 +96,36 @@ impl EfficientPlayField {
 
     pub fn generate_won_configs_black_and_white(
         max_stone_count: i32,
-    ) -> (FnvHashSet<EfficientPlayField>, FnvHashSet<EfficientPlayField>) {
-        let mut won_set = EfficientPlayField::generate_start_won_configs_white(max_stone_count);
-        let mut lost_set = FnvHashSet::<EfficientPlayField>::default();
+    ) -> (FnvHashSetMutex, FnvHashSetMutex) {
+        //let mut won_set = EfficientPlayField::generate_start_won_configs_white(max_stone_count);
+        //let mut lost_set = FnvHashSet::<EfficientPlayField>::default();
 
-        let mut work_queue: VecDeque<EfficientTreePlayField> = won_set.iter().map(|pf| EfficientTreePlayField { playfield : *pf, niveau : 0}).collect();
+        let won_set = EfficientPlayField::generate_start_won_configs_white(max_stone_count);
+        let lost_set = Arc::new(Mutex::new(FnvHashSet::<EfficientPlayField>::default()));
 
-        while let Some(EfficientTreePlayField {playfield : mut current_pf, niveau : tree_level_bottom_up }) = work_queue.pop_front() {
+        let work_queue: VecDeque<EfficientTreePlayField> = won_set.iter().map(|pf| EfficientTreePlayField { playfield : *pf, niveau : 0}).collect();
+
+        let won_set = Arc::new(Mutex::new(won_set));
+        let work_queue = Arc::new(Mutex::new(work_queue));
+
+        loop {
+            let mut mutex_guard = work_queue.lock().unwrap();
+            if mutex_guard.is_empty() {
+                break;
+            }
+            let EfficientTreePlayField {playfield : mut current_pf, niveau : tree_level_bottom_up } = mutex_guard.pop_front().unwrap();
+            drop(mutex_guard);
+
             // White moved last
             if tree_level_bottom_up % 2 == 0 {
                 // Every backward move is going to be added:
                 current_pf
                     .get_backward_moves(PlayerColor::White, max_stone_count)
-                    .iter_mut()
+                    .par_iter_mut()
                     .map(|pf| pf.get_canon_form())
-                    .filter(|pf_canon| won_set.insert(*pf_canon))
+                    .filter(|pf_canon| won_set.lock().unwrap().insert(*pf_canon))
                     .for_each(|previously_unknown_pf| {
-                        work_queue.push_back(EfficientTreePlayField { playfield: previously_unknown_pf, niveau : tree_level_bottom_up + 1})
+                        work_queue.lock().unwrap().push_back(EfficientTreePlayField { playfield: previously_unknown_pf, niveau : tree_level_bottom_up + 1})
                     });
             }
             //Black moved last
@@ -119,9 +135,9 @@ impl EfficientPlayField {
 
                     let is_any_backward_forward_move_unknown = backward_move
                         .get_forward_moves(PlayerColor::Black)
-                        .iter_mut()
+                        .par_iter_mut()
                         .map(|pf| pf.get_canon_form())
-                        .any(|pf_canon| !won_set.contains(&pf_canon));
+                        .any(|pf_canon| !won_set.lock().unwrap().contains(&pf_canon));
 
                     // Making a backward-move when black is on turn, we have to make forward moves again to determine if
                     // the playfield is lost or won. Therefore, when on of those backward-forward playfield win-lost state
@@ -133,8 +149,8 @@ impl EfficientPlayField {
                     // Adds the inverted backward_playfield to lost_set
                     let insert_playfield = backward_move.invert_playfields_stone_colors().get_canon_form();
 
-                    if lost_set.insert(insert_playfield) {
-                        work_queue.push_back(EfficientTreePlayField {playfield : backward_move, niveau : tree_level_bottom_up + 1});
+                    if lost_set.lock().unwrap().insert(insert_playfield) {
+                        work_queue.lock().unwrap().push_back(EfficientTreePlayField {playfield : backward_move, niveau : tree_level_bottom_up + 1});
                     }
                 }
             }
@@ -192,8 +208,9 @@ pub fn compare_to_reference_data(input_felder: &str, output: &str, max_stone_cou
     let mut writer_dbg = BufWriter::new(dbg_file);
 
     let (lost, won) = EfficientPlayField::generate_won_configs_black_and_white(max_stone_count);
+    let (won, lost) = (won.lock().unwrap(), lost.lock().unwrap());
 
-    println!("\n\nWON: {} --- LOST: {}\n\n", won.len(), lost.len());
+    //println!("\n\nWON: {} --- LOST: {}\n\n", won.len(), lost.len());
 
     let mut counter_failures = 0;
     for line_content in reader_input.lines() {

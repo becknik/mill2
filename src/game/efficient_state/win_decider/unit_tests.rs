@@ -26,6 +26,7 @@ fn number_of_base_won_playfields_is_correct_test() {
 #[test]
 fn t3vs3_all_won_loose_playfields_count_correct() {
     let (lost, won) = EfficientPlayField::generate_won_configs_black_and_white(3);
+    let (won, lost) = (won.lock().unwrap(), lost.lock().unwrap());
 
     println!("\n\nWON: {} --- LOST: {}\n\n", won.len(), lost.len());
 

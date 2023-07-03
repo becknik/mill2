@@ -285,6 +285,7 @@ dependencies = [
  "fnv",
  "nanorand",
  "once_cell",
+ "rayon",
  "smallvec",
  "smartstring",
  "yansi",
