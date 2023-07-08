@@ -6,9 +6,7 @@ use std::{
 use fnv::FnvHashMap;
 use smallvec::SmallVec;
 
-use mill_playfield::{EfficientPlayField,FieldPos,MoveDirection,DirectionToCheck};
-
-use super::PlayerColor;
+use mill_playfield::{EfficientPlayField,FieldPos,MoveDirection,DirectionToCheck, PlayerColor};
 
 /// Calculates the possible moves of color, the amount of moves wich lead to a mill for color
 /// and the amount of stones of the other players color, which can be beaten
@@ -262,6 +260,10 @@ fn init_writer_reader(input: &str) -> (BufReader<File>, BufWriter<File>) {
 
 #[cfg(test)]
 mod tests {
+    use mill_playfield::PlayerColor;
+
+    use crate::game::efficient_state::get_move_triple;
+
     use super::EfficientPlayField;
 
     #[test]
@@ -280,7 +282,7 @@ mod tests {
         let mut test_epf = EfficientPlayField::from_coded("EWWBBEEEEEWBBEEEEEEEBEEB");
         println!("{test_epf}");
 
-        let (x, y, z) = test_epf.get_move_triple(crate::game::PlayerColor::White);
+        let (x, y, z) = get_move_triple(&mut test_epf, PlayerColor::White);
         println!("{x} {y} {z}")
     }
 }

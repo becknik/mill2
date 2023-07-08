@@ -72,7 +72,7 @@ impl GameCoordinator {
             println!(
                 "> Which player wants to play with the {} >>{}<<?",
                 HIGHLIGHT.paint("white stones"),
-                HIGHLIGHT.paint(mill::game::PlayerColor::White)
+                HIGHLIGHT.paint(mill_playfield::PlayerColor::White)
             );
             print!("> Please enter a {} or the {}: ", EMP.paint("players name"), EMP.paint("player's number"));
             io::stdout().flush().unwrap();

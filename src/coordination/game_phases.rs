@@ -1,6 +1,7 @@
 use std::io::{self, Write};
 
-use mill::game::{painting::*, Field, PlayerColor};
+use mill::game::{painting::*, Field};
+use mill_playfield::PlayerColor;
 use smallvec::SmallVec;
 use smartstring::alias::CompactString;
 

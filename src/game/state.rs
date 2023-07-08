@@ -1,6 +1,8 @@
 pub mod printing;
 pub mod representation;
 
+use mill_playfield::PlayerColor;
+
 use self::representation::types::*;
 use crate::game::Field;
 
@@ -33,7 +35,6 @@ pub enum PlayFieldError {
 
 use self::representation::constants::*;
 
-use super::PlayerColor;
 
 pub struct PlayField {
     state: [FieldState; FIELD_COUNT],

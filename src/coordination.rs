@@ -1,10 +1,11 @@
 //! Contains the setup method for the [GameCoordinator] struct, which is meant to modify the [PlayField] state, receive & handle player input, set things up, enforce the play phases etc.
 //! This module holds the game loop & some auxiliary helper functions.
 
-use mill::game::{painting::*, Field, PlayerColor};
+use mill::game::{painting::*, Field};
 
 use mill::game::state::PlayField;
 
+use mill_playfield::PlayerColor;
 use smallvec::SmallVec;
 use smartstring::alias::CompactString;
 
