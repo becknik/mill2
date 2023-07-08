@@ -54,6 +54,8 @@ Or do a `cargo bench` & take a look into the `perf-opti` branch to see my waste 
 
 ### Assignment 6
 
+> Moved to library
+
 ```bash
 cd mill2
 # release is necessary, else it might take forever...
