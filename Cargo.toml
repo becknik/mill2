@@ -1,16 +1,17 @@
 [package]
 name = "mill"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Jannik Becker <jannikb@posteo.de>"]
 edition = "2021"
 
 [dependencies]
 yansi = "0.5.1"
-smallvec = "1.10.0"
 smartstring = "1.0.1"
 once_cell = "1.17.1"
 either = "1.8.1"
+smallvec = "1.10.0"
 fnv = "1.0.7"
+mill-playfield = { path = "../mill-playfield" }
 
 [profile.dev]
 opt-level = 0
